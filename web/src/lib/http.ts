@@ -1,19 +1,20 @@
 interface IHttp {
-  get: <TResponse>(
-    url: string,
-    headers?: Record<string, string>
-  ) => Promise<TResponse>;
-  post: <TResponse, TData = never>(
+  get: <TResponse, TData = undefined>(
     url: string,
     data: TData,
     headers?: Record<string, string>
   ) => Promise<TResponse>;
-  put: <TResponse, TData = never>(
+  post: <TResponse, TData = undefined>(
     url: string,
     data: TData,
     headers?: Record<string, string>
   ) => Promise<TResponse>;
-  patch: <TResponse, TData = never>(
+  put: <TResponse, TData = undefined>(
+    url: string,
+    data: TData,
+    headers?: Record<string, string>
+  ) => Promise<TResponse>;
+  patch: <TResponse, TData = undefined>(
     url: string,
     data: TData,
     headers?: Record<string, string>
@@ -22,31 +23,32 @@ interface IHttp {
 }
 
 class Http implements IHttp {
-  public async get<TResponse>(
+  public async get<TResponse, TData = undefined>(
     url: string,
+    params?: TData,
     headers?: Record<string, string>
   ): Promise<TResponse> {
-    const response = await fetch(url, {
+    const response = await fetch(withParams(url, params), {
       method: 'GET',
       headers: overrideHeaders(headers),
     });
     return await response.json();
   }
 
-  public async post<TResponse, TData = never>(
+  public async post<TResponse, TData = undefined>(
     url: string,
-    data: TData,
+    data?: TData,
     headers?: Record<string, string>
   ): Promise<TResponse> {
     const response = await fetch(url, {
       method: 'POST',
       headers: overrideHeaders(headers),
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
     return await response.json();
   }
 
-  public async put<TResponse, TData = never>(
+  public async put<TResponse, TData = undefined>(
     url: string,
     data: TData,
     headers?: Record<string, string>
@@ -54,20 +56,20 @@ class Http implements IHttp {
     const response = await fetch(url, {
       method: 'PUT',
       headers: overrideHeaders(headers),
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
     return await response.json();
   }
 
-  public async patch<TResponse, TData = never>(
+  public async patch<TResponse, TData = undefined>(
     url: string,
-    data: TData,
+    data?: TData,
     headers?: Record<string, string>
   ): Promise<TResponse> {
     const response = await fetch(url, {
       method: 'PATCH',
       headers: overrideHeaders(headers),
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
     return await response.json();
   }
@@ -82,6 +84,12 @@ class Http implements IHttp {
     });
     return await response.json();
   }
+}
+
+function withParams<TData>(url: string, data?: TData): string {
+  if (!data) return url;
+  const params = new URLSearchParams(data).toString();
+  return `${url}?${params}`;
 }
 
 function overrideHeaders(
